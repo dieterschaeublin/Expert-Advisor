@@ -19,7 +19,9 @@ Die Idee: **„Mit dem Trend handeln, aber erst nach einem Rücksetzer einsteige
 | Rücksetzer | Bollinger Bands (20, 2.0) | Kurs hat in den letzten 3 Kerzen das äußere Band berührt |
 | Timing | RSI (7) | RSI kreuzt aus überverkauft (30) bzw. überkauft (70) zurück |
 | Bestätigung | Kerzenfarbe | Signalkerze schließt in Trendrichtung |
-| Stops | ATR (14) | SL = 1,5 × ATR, TP = 1,2 × ATR – passt sich der Volatilität an |
+| Stops | ATR (14) | SL = 2,0 × ATR (min. 8 Pips), TP = 2,0 × ATR – passt sich der Volatilität an |
+| Kostenfilter | Spread vs. SL | Trade nur, wenn Spread (+ Kommission) ≤ 15 % des Stop Loss |
+| Trendstärke (optional) | ADX (14) | Nur handeln, wenn ADX ≥ 20 |
 
 ### Long-Einstieg (Short spiegelbildlich)
 1. Aufwärtstrend auf M5 **und** H1
@@ -28,9 +30,9 @@ Die Idee: **„Mit dem Trend handeln, aber erst nach einem Rücksetzer einsteige
 4. Letzte Kerze ist bullisch (Close > Open)
 
 ### Trade-Management
-- **Break-Even:** ab 0,7 × ATR Gewinn wird der SL auf Einstieg + 0,5 Pips gezogen
-- **Trailing-Stop:** ab 0,9 × ATR Gewinn folgt der SL im Abstand 0,6 × ATR
-- **Zeit-Exit:** Trades werden nach 48 Kerzen (4 Stunden) geschlossen
+- **Break-Even:** ab 1,2 × ATR Gewinn wird der SL auf Einstieg + 1 Pip gezogen
+- **Trailing-Stop:** standardmäßig aus (optional ab 1,5 × ATR, Abstand 1,0 × ATR)
+- **Zeit-Exit:** Trades werden nach 72 Kerzen (6 Stunden) geschlossen
 - **Wochenende:** freitags ab 18 Uhr keine neuen Trades, ab 21 Uhr wird alles geschlossen
 
 ---
@@ -45,8 +47,9 @@ Die Idee: **„Mit dem Trend handeln, aber erst nach einem Rücksetzer einsteige
 | Tagesverlust-Limit | 3 % → keine neuen Trades mehr an diesem Tag |
 | Verlustserie | nach 3 Verlusten in Folge 60 Minuten Pause |
 | Spread-Filter | max. 2,0 Pips |
-| Volatilitäts-Filter | ATR zwischen 2 und 15 Pips |
-| Max. Stop Loss | 20 Pips – sonst kein Trade |
+| Kosten-Filter | Spread + Kommission ≤ 15 % des SL |
+| Volatilitäts-Filter | ATR zwischen 3 und 20 Pips |
+| Max. Stop Loss | 25 Pips – sonst kein Trade |
 | Handelszeit | 08–20 Uhr Server-Zeit (London + New York) |
 
 Der EA ist **ECN-kompatibel**: Die Order wird zuerst ohne SL/TP gesendet und danach sofort modifiziert. Kann der Stop Loss nicht gesetzt werden, wird der Trade aus Sicherheitsgründen sofort geschlossen – **es gibt nie eine Position ohne Stop Loss.**
@@ -75,6 +78,18 @@ Der EA ist **ECN-kompatibel**: Die Order wird zuerst ohne SL/TP gesendet und dan
 > **Server-Zeit beachten:** Die Handelszeiten beziehen sich auf die Uhrzeit des Brokers (im *Marktübersicht*-Fenster sichtbar). Viele Broker laufen auf GMT+2/+3 – dann entspricht 08–20 Uhr ungefähr der London- und New-York-Session.
 
 ---
+
+## Warum Version 2? (Lehren aus dem ersten Backtest)
+
+Backtest v1 (EURUSD M5, Spread 1,5 Pips, 10 000 USD): 1520 Trades, 52 % Treffer, **Netto −8429 USD**, Profit-Faktor 0,48.
+
+| Ursache | Zahl | Änderung in v2 |
+|---|---|---|
+| Spread frisst den Gewinn | Spread ≈ 25 % des SL, ≈ 12 USD Kosten pro Trade, ≈ 19 000 USD gesamt | Kostenfilter (Spread ≤ 15 % SL), SL min. 8 Pips / 2 × ATR |
+| Gewinner zu klein | Ø Gewinn 9,99 vs. Ø Verlust 22,31 → bräuchte 69 % Treffer | TP = SL (1:1), Break-Even später, Trailing aus |
+| Schwaches Signal | 52 % Treffer ≈ Münzwurf | optionaler ADX-Filter, Optimierung empfohlen |
+
+**Folge:** Bei 1,5 Pips Spread handelt v2 auf M5 deutlich seltener (nur bei ATR ≥ ca. 5 Pips). Für mehr Trades: **M15-Chart** oder ein **ECN-/Raw-Konto** (Spread 0,1–0,3 Pips + Kommission; dann `InpCommissionPips` ≈ 0,7 setzen).
 
 ## Backtest & Optimierung (unbedingt vor Live-Einsatz!)
 
@@ -109,18 +124,21 @@ Danach **mindestens 4 Wochen auf einem Demokonto** laufen lassen, bevor echtes G
 | Trend | `InpEmaFast` / `InpEmaSlow` | 50 / 200 | EMAs auf Chart-Zeitrahmen |
 | | `InpEmaSlopeBars` | 5 | Steigung der EMA 200 prüfen |
 | | `InpUseHTFFilter`, `InpHTF`, `InpHTFEma` | true, H1, 50 | Filter höherer Zeitrahmen |
+| | `InpUseAdxFilter`, `InpAdxPeriod`, `InpAdxMin` | false, 14, 20 | ADX-Trendstärke-Filter |
 | Einstieg | `InpRsiPeriod` | 7 | RSI-Periode |
 | | `InpRsiOversold` / `InpRsiOverbought` | 30 / 70 | RSI-Grenzen |
 | | `InpUseBBFilter`, `InpBBPeriod`, `InpBBDeviation`, `InpBBLookback` | true, 20, 2.0, 3 | Bollinger-Band-Filter |
 | | `InpRequireCandle` | true | Bestätigungskerze |
 | Exits | `InpAtrPeriod` | 14 | ATR-Periode |
-| | `InpSLAtrMult` / `InpTPAtrMult` | 1.5 / 1.2 | SL/TP als ATR-Vielfaches |
-| | `InpMinSLPips` / `InpMaxSLPips` | 5 / 20 | SL-Grenzen |
-| | `InpUseBreakEven`, `InpBEAtrMult`, `InpBELockPips` | true, 0.7, 0.5 | Break-Even |
-| | `InpUseTrailing`, `InpTrailStartAtr`, `InpTrailDistAtr` | true, 0.9, 0.6 | Trailing-Stop |
-| | `InpMaxBarsInTrade` | 48 | Zeit-Exit (0 = aus) |
+| | `InpSLAtrMult` / `InpTPAtrMult` | 2.0 / 2.0 | SL/TP als ATR-Vielfaches |
+| | `InpMinSLPips` / `InpMaxSLPips` | 8 / 25 | SL-Grenzen |
+| | `InpUseBreakEven`, `InpBEAtrMult`, `InpBELockPips` | true, 1.2, 1.0 | Break-Even |
+| | `InpUseTrailing`, `InpTrailStartAtr`, `InpTrailDistAtr` | false, 1.5, 1.0 | Trailing-Stop |
+| | `InpMaxBarsInTrade` | 72 | Zeit-Exit (0 = aus) |
 | Filter | `InpMaxSpreadPips` | 2.0 | Max. Spread |
-| | `InpMinAtrPips` / `InpMaxAtrPips` | 2 / 15 | Volatilitätsbereich |
+| | `InpMaxSpreadToSL` | 0.15 | Max. Kosten im Verhältnis zum SL (0 = aus) |
+| | `InpCommissionPips` | 0 | Kommission pro Trade in Pips (ECN) |
+| | `InpMinAtrPips` / `InpMaxAtrPips` | 3 / 20 | Volatilitätsbereich |
 | | `InpUseSession`, `InpSessionStartHour`, `InpSessionEndHour` | true, 8, 20 | Handelszeiten |
 | | `InpFridayStopHour`, `InpFridayCloseAll`, `InpFridayCloseHour` | 18, true, 21 | Wochenend-Schutz |
 | Schutz | `InpDailyLossPct` | 3.0 | Tagesverlust-Limit % |

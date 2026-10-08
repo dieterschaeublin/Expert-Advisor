@@ -12,9 +12,14 @@
 //|                   Risiko-%, Break-Even, Trailing-Stop, Zeit-Exit  |
 //|  5. Schutz      : Spread-, Volatilitaets-, Sessions-Filter,       |
 //|                   Tagesverlust-Limit, Pause nach Verlustserie     |
+//|                                                                  |
+//| v2.00: Kostenbewusst - Spread darf max. 15 % des SL betragen,    |
+//|        weitere Stops (2 x ATR, min. 8 Pips), TP = SL (1:1),      |
+//|        spaeteres Break-Even, Trailing standardmaessig aus,       |
+//|        optionaler ADX-Trendstaerke-Filter.                       |
 //+------------------------------------------------------------------+
 #property copyright "Expert-Advisor"
-#property version   "1.00"
+#property version   "2.00"
 #property strict
 #property description "M5 Trend-Pullback-Scalper: EMA-Trendfilter, Bollinger Bands + RSI Einstieg,"
 #property description "ATR-basierte Stops, risikobasierte Lotgroesse und mehrere Schutzmechanismen."
@@ -41,6 +46,9 @@ input int              InpEmaSlopeBars     = 5;          // Steigung der langsam
 input bool             InpUseHTFFilter     = true;       // Hoeheren Zeitrahmen als Filter nutzen
 input ENUM_TIMEFRAMES  InpHTF              = PERIOD_H1;  // Hoeherer Zeitrahmen
 input int              InpHTFEma           = 50;         // EMA-Periode hoeherer Zeitrahmen
+input bool             InpUseAdxFilter     = false;      // ADX-Trendstaerke-Filter
+input int              InpAdxPeriod        = 14;         // ADX Periode
+input double           InpAdxMin           = 20.0;       // Minimaler ADX (Trend vorhanden)
 
 //--- Einstieg
 input string           InpSepEntry         = "===== Einstieg ====="; // -----
@@ -56,23 +64,25 @@ input bool             InpRequireCandle    = true;       // Bestaetigungskerze i
 //--- Exits
 input string           InpSepExit          = "===== Stop Loss / Take Profit ====="; // -----
 input int              InpAtrPeriod        = 14;         // ATR Periode
-input double           InpSLAtrMult        = 1.5;        // Stop Loss = ATR x Faktor
-input double           InpTPAtrMult        = 1.2;        // Take Profit = ATR x Faktor
-input double           InpMinSLPips        = 5.0;        // Minimaler Stop Loss (Pips)
-input double           InpMaxSLPips        = 20.0;       // Maximaler Stop Loss (Pips) - sonst kein Trade
+input double           InpSLAtrMult        = 2.0;        // Stop Loss = ATR x Faktor
+input double           InpTPAtrMult        = 2.0;        // Take Profit = ATR x Faktor
+input double           InpMinSLPips        = 8.0;        // Minimaler Stop Loss (Pips)
+input double           InpMaxSLPips        = 25.0;       // Maximaler Stop Loss (Pips) - sonst kein Trade
 input bool             InpUseBreakEven     = true;       // Break-Even aktivieren
-input double           InpBEAtrMult        = 0.7;        // Break-Even ab Gewinn = ATR x Faktor
-input double           InpBELockPips       = 0.5;        // Gesicherte Pips bei Break-Even
-input bool             InpUseTrailing      = true;       // Trailing-Stop aktivieren
-input double           InpTrailStartAtr    = 0.9;        // Trailing ab Gewinn = ATR x Faktor
-input double           InpTrailDistAtr     = 0.6;        // Trailing-Abstand = ATR x Faktor
-input int              InpMaxBarsInTrade   = 48;         // Trade nach X Bars schliessen (0 = aus)
+input double           InpBEAtrMult        = 1.2;        // Break-Even ab Gewinn = ATR x Faktor
+input double           InpBELockPips       = 1.0;        // Gesicherte Pips bei Break-Even
+input bool             InpUseTrailing      = false;      // Trailing-Stop aktivieren
+input double           InpTrailStartAtr    = 1.5;        // Trailing ab Gewinn = ATR x Faktor
+input double           InpTrailDistAtr     = 1.0;        // Trailing-Abstand = ATR x Faktor
+input int              InpMaxBarsInTrade   = 72;         // Trade nach X Bars schliessen (0 = aus)
 
 //--- Filter
 input string           InpSepFilter        = "===== Filter ====="; // -----
 input double           InpMaxSpreadPips    = 2.0;        // Maximaler Spread (Pips)
-input double           InpMinAtrPips       = 2.0;        // Minimale ATR (Pips) - zu ruhiger Markt
-input double           InpMaxAtrPips       = 15.0;       // Maximale ATR (Pips) - zu wilder Markt
+input double           InpMaxSpreadToSL    = 0.15;       // Max. Spread (+Kommission) im Verhaeltnis zum SL (0 = aus)
+input double           InpCommissionPips   = 0.0;        // Kommission pro Trade in Pips (ECN-Konten)
+input double           InpMinAtrPips       = 3.0;        // Minimale ATR (Pips) - zu ruhiger Markt
+input double           InpMaxAtrPips       = 20.0;       // Maximale ATR (Pips) - zu wilder Markt
 input bool             InpUseSession       = true;       // Handelszeiten-Filter (Server-Zeit)
 input int              InpSessionStartHour = 8;          // Handelsbeginn (Stunde, Server-Zeit)
 input int              InpSessionEndHour   = 20;         // Handelsende (Stunde, Server-Zeit)
@@ -204,6 +214,9 @@ int GetSignal()
       trendDown = trendDown && (htfClose < htfEma);
    }
 
+   if(InpUseAdxFilter && iADX(NULL, 0, InpAdxPeriod, PRICE_CLOSE, MODE_MAIN, 1) < InpAdxMin)
+      return -1;
+
    if(!trendUp && !trendDown)
       return -1;
 
@@ -322,6 +335,17 @@ bool OpenTrade(int type, double atr)
    {
       Print("Kein Trade: Stop Loss waere zu gross (", DoubleToString(slDist / g_pip, 1), " Pips)");
       return false;
+   }
+
+   //--- Handelskosten im Verhaeltnis zum Stop: zu enge Stops verlieren gegen den Spread
+   if(InpMaxSpreadToSL > 0)
+   {
+      double costPips = (Ask - Bid) / g_pip + InpCommissionPips;
+      if(costPips > InpMaxSpreadToSL * slDist / g_pip)
+      {
+         g_status = StringFormat("Kosten zu hoch: %.1f Pips bei SL %.1f Pips", costPips, slDist / g_pip);
+         return false;
+      }
    }
 
    //--- Mindestabstand des Brokers beachten
@@ -639,7 +663,7 @@ void UpdatePanel(double atr)
    if(!InpShowPanel || (IsTesting() && !IsVisualMode()))
       return;
 
-   string txt = "\n  M5 Trend-Scalper v1.00\n";
+   string txt = "\n  M5 Trend-Scalper v2.00\n";
    txt += "  ------------------------------\n";
    txt += StringFormat("  Status        : %s\n", g_status);
    txt += StringFormat("  Spread        : %.1f Pips\n", (Ask - Bid) / g_pip);
