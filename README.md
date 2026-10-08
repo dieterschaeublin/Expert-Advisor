@@ -197,3 +197,22 @@ Im **Live-Betrieb** auf dem ECN-Konto: `InpCommissionPerLot` auf die echte Kommi
 4. Zum Vergleich einmal mit Spread 15 testen – das zeigt, wie stark das Ergebnis an den Kosten hängt
 
 > **Ehrlicher Hinweis:** Auch dieser EA konnte nicht mit echten Kursdaten getestet werden (kein Datenzugang in der Entwicklungsumgebung). Er ist logisch besser begründet als der Rücksetzer-Ansatz, aber erst der Backtest zeigt, ob er einen Vorteil hat.
+
+---
+
+# D1 RSI(2)-Rückkehr – EXPERIMENT (nur Demo)
+
+Datei: [`MQL4/Experts/D1_RSI2_Reversion_DEMO.mq4`](MQL4/Experts/D1_RSI2_Reversion_DEMO.mq4)
+
+Einziger Kandidat aus der [Strategie-Recherche](research/ERGEBNIS.md) – **ohne statistisch belegten Vorteil** (Backtest 2023–2026: +0,039 R/Trade, Profit-Faktor 1,19, t = 0,8). Er läuft standardmäßig **nur auf Demokonten**.
+
+| Regel | Wert |
+|---|---|
+| Zeitrahmen | D1, je ein Chart für EURUSD, GBPUSD, USDJPY, USDCHF, EURGBP |
+| Long | RSI(2) < 5 und Schluss über EMA(600) |
+| Short | RSI(2) > 95 und Schluss unter EMA(600) |
+| Stop | 2 × ATR(14), kein Take Profit |
+| Exit | Schluss über/unter EMA(5) oder nach 12 Tagen |
+| Erwartung | ca. 34 Trades/Jahr über alle 5 Paare zusammen |
+
+Zum Beobachten: mindestens 6 Monate auf dem Demokonto laufen lassen und mit dem Backtest vergleichen.
