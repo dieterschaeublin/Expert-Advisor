@@ -51,3 +51,20 @@ Halten der höher verzinsten Währung, Swap = Leitzinsdifferenz − 1 % p.a. Bro
 Positiv fast nur durch **USDJPY** (2023–2026 +9,3 %/Jahr) – eine Einzelwette auf die Zinsdifferenz USA/Japan
 mit bekanntem Crash-Risiko (z. B. August 2024). Mit nur 5 G10-Paaren und kleinen Zinsdifferenzen
 reicht der Swap-Ertrag nach Broker-Aufschlag nicht. **Kein nachhaltiger Ansatz.**
+
+## Nachtrag: Weekend-Gap-Fill (`weekend_gap.py`)
+
+Kurslücke zum Wochenbeginn (Montag-Eröffnung vs. Freitags-Schluss), Handel Richtung Lückenschluss.
+Typische Lücke: 6–10 Pips (Median); Lücken > 0,25 Tages-ATR: ca. 10 pro Jahr und Paar. 72 Varianten.
+
+| Einstieg | Varianten positiv 2016–22 | 2023–26 | Median R 2016–22 | Trefferquote |
+|---|---|---|---|---|
+| 1. Stunde (Wochen-Eröffnung) | 96 % | 100 % | +0,12 R | 76 % |
+| 2. Stunde | **0 %** | 62 % | −0,06 R | 63 % |
+| 3. Stunde | 0 % | 17 % | −0,15 R | 54 % |
+
+**Bewertung:** Der Lückenschluss findet überwiegend in der **ersten Stunde** statt – genau dann, wenn die
+Spreads zur Wochen-Eröffnung stark ausgeweitet sind (EURUSD oft mehrere Pips). Die Bid-Daten zeigen den
+Vorteil, aber zum realen Ask ist er vermutlich nicht erreichbar. Ab der 2. Stunde (normale Spreads) ist der
+Ansatz 2016–2022 in **allen** Varianten negativ. Ohne Bid/Ask-Tickdaten der Wochen-Eröffnung nicht abschließend
+prüfbar → mit Dukascopy-Tickdaten (Bid + Ask) gezielt nachtesten.
