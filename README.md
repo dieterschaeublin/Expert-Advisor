@@ -153,3 +153,47 @@ Danach **mindestens 4 Wochen auf einem Demokonto** laufen lassen, bevor echtes G
 ## ⚠️ Risikohinweis
 
 Forex- und CFD-Handel mit Hebel ist mit einem hohen Verlustrisiko verbunden. Dieser EA ist **keine Gewinngarantie**. Vergangene Ergebnisse (auch im Backtest) lassen keine Rückschlüsse auf die Zukunft zu. Scalping reagiert besonders empfindlich auf Spreads, Kommissionen, Slippage und Latenz – Ergebnisse können sich daher von Broker zu Broker stark unterscheiden. Setze nur Kapital ein, dessen Verlust du verkraften kannst, und teste immer zuerst auf einem Demokonto.
+
+---
+
+# ECN Momentum-Scalper (für ECN-/Raw-Spread-Konten)
+
+Datei: [`MQL4/Experts/ECN_MomentumScalper.mq4`](MQL4/Experts/ECN_MomentumScalper.mq4)
+
+Neuer Ansatz nach der Auswertung des M5_TrendScalper-Backtests: Dort lag die Trefferquote bis zum Break-Even bei 56 % – ein **zufälliger** Einstieg hätte bei denselben Abständen ca. 54 % erreicht. Das Rücksetzer-Signal (RSI + Bollinger) hatte also keinen Vorteil. Der ECN-EA handelt deshalb **mit** dem Momentum statt dagegen.
+
+## Strategie
+| Baustein | Regel |
+|---|---|
+| Trend | H1-Schlusskurs über/unter EMA 50 **und** M5-Schlusskurs über/unter EMA 100 |
+| Ausbruch | Schlusskurs bricht frisch aus dem Hoch/Tief der letzten 20 M5-Kerzen aus |
+| Momentum | Ausbruchskerze mit Körper ≥ 0,5 × ATR, Schluss im oberen/unteren Drittel |
+| Volatilität | ATR(14) ≥ ATR(100) – nur wenn der Markt in Bewegung kommt |
+| Kosten | Spread + Kommission ≤ 15 % des Stop Loss; Kommission ist in der Lotgröße eingerechnet |
+| Stop Loss | 1,5 × ATR (6–20 Pips) |
+| Take Profit | 1,5 R (1,5 × Stop-Abstand) |
+| Break-Even | ab 1 R, gesichert werden Kommission + 0,3 Pips |
+| Zeit-Exit | nach 36 Kerzen (3 Stunden) |
+| Sperre | nach einem Verlust 12 Kerzen keine Trades in dieselbe Richtung |
+| Handelszeit | 9–19 Uhr Server-Zeit, max. 12 Trades/Tag |
+| Kontoschutz | 0,5 % Risiko/Trade, Tagesverlust-Limit 2 %, Pause nach 4 Verlusten in Folge |
+
+## ECN-Kosten im MT4-Strategietester simulieren
+
+Der MT4-Tester zieht **keine Kommission** ab. Damit der Test realistisch ist, die Kommission in den Spread einrechnen:
+
+| Einstellung | Wert | Begründung |
+|---|---|---|
+| Spread (Tester, Feld „Spread“) | **9** | 0,2 Pips Raw-Spread + 0,7 Pips Kommission ($7/Lot) = 0,9 Pips |
+| `InpCommissionPerLot` | **0** | Kommission steckt schon im Spread – sonst doppelt gezählt |
+| `InpMaxSpreadPips` | 1.0 (Standard) | |
+
+Im **Live-Betrieb** auf dem ECN-Konto: `InpCommissionPerLot` auf die echte Kommission deines Brokers setzen (z. B. 7.0 für $3,50 pro Seite und Lot) und Tester-Spread vergessen.
+
+## Testprotokoll (bitte so durchführen)
+1. **Zeitraum A** 2023.01.01–2024.12.31 mit Standard-Einstellungen testen
+2. **Zeitraum B** 2025.01.01–2026.10.07 mit **denselben** Einstellungen testen
+3. Nur wenn **beide** Zeiträume Profit-Faktor > 1,1 zeigen, auf ein ECN-Demokonto
+4. Zum Vergleich einmal mit Spread 15 testen – das zeigt, wie stark das Ergebnis an den Kosten hängt
+
+> **Ehrlicher Hinweis:** Auch dieser EA konnte nicht mit echten Kursdaten getestet werden (kein Datenzugang in der Entwicklungsumgebung). Er ist logisch besser begründet als der Rücksetzer-Ansatz, aber erst der Backtest zeigt, ob er einen Vorteil hat.
