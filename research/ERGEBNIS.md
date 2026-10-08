@@ -28,3 +28,13 @@ allein durch Zufall zu erwarten. Kein ausreichender Beleg für einen echten Vort
 
 Die früheren M5-EAs (M5_TrendScalper, ECN_MomentumScalper) bestätigen das Bild: Auf kurzen Zeitrahmen
 schwanken einfache Indikator-Signale um null, die Kosten machen daraus einen stetigen Verlust.
+
+## Nachtrag: Dokumentierte Markteffekte (`anomalies.py`)
+
+| Effekt | 2016–2022 | 2023–2026 | Bewertung |
+|---|---|---|---|
+| „Long um Mitternacht“ (alle Paare, t = 8–18) | stark | stark | **Datenartefakt:** Bid-Kurse fallen beim Rollover (Spread-Ausweitung, Kurslücke −1 bis −3 Pips um 0 Uhr) und erholen sich bis 2 Uhr. Zum Ask nicht handelbar. |
+| Tageszeit-Effekt (Breedon & Ranaldo), ohne 23–03 Uhr | EURUSD short 11–15 Uhr t = 3,8 | t = 0,4 | passt zur Theorie, aber nicht mehr vorhanden (bei ~280 Fenstern je Paar ist t ≈ 3 im IS auch Zufall) |
+| Gotobi USDJPY (Tokio-Fixing) | t = 2,5 | t = 0,4 | nicht mehr vorhanden |
+
+**Fazit:** Auch die in der Literatur beschriebenen Effekte bestehen den Out-of-Sample-Test nicht.
