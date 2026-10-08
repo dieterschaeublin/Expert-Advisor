@@ -1,0 +1,66 @@
+{
+  "manifest_version": "0.3",
+  "name": "metatrader4-connector",
+  "display_name": "MetaTrader 4 Connector",
+  "version": "1.0.0",
+  "description": "Verbindet Claude Desktop lokal mit MetaTrader 4: EAs installieren, kompilieren und starten, Konto und Trades abfragen, optional handeln.",
+  "long_description": "Lokaler Connector fuer MetaTrader 4 (macOS mit Wine-basiertem MT4 und Windows). Er installiert und kompiliert Expert Advisors direkt im MT4-Datenordner, liest Experten- und Terminal-Logs und spricht ueber den mitgelieferten ClaudeBridge-EA mit dem laufenden Terminal (Konto, Positionen, Historie, Kurse, Charts, EA auf Chart setzen). Trading-Befehle sind doppelt abgesichert: Sie muessen sowohl hier in den Einstellungen als auch im ClaudeBridge-EA freigegeben werden. Zugangsdaten verlassen den Computer nicht.",
+  "author": { "name": "Dieter Schaeublin" },
+  "repository": { "type": "git", "url": "https://github.com/dieterschaeublin/expert-advisor" },
+  "keywords": ["metatrader", "mt4", "forex", "trading", "expert advisor"],
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "MT4_DATA_DIR": "${user_config.mt4_data_dir}",
+        "MT4_ALLOW_TRADING": "${user_config.allow_trading}",
+        "MT4_WINE_PATH": "${user_config.wine_path}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "mt4_status", "description": "Installation, Bruecke, MetaEditor und Trading-Freigabe pruefen" },
+    { "name": "mt4_list_experts", "description": "Installierte EAs auflisten" },
+    { "name": "mt4_install_ea", "description": "EA nach MQL4/Experts kopieren und kompilieren" },
+    { "name": "mt4_compile_ea", "description": "EA mit MetaEditor kompilieren" },
+    { "name": "mt4_attach_ea", "description": "EA auf einem neuen Chart starten" },
+    { "name": "mt4_read_log", "description": "Experten- oder Terminal-Log lesen" },
+    { "name": "mt4_account", "description": "Kontoinformationen" },
+    { "name": "mt4_positions", "description": "Offene Positionen" },
+    { "name": "mt4_history", "description": "Geschlossene Trades" },
+    { "name": "mt4_quote", "description": "Aktueller Kurs und Spread" },
+    { "name": "mt4_charts", "description": "Offene Charts" },
+    { "name": "mt4_open_trade", "description": "Market-Order eroeffnen (nur wenn freigegeben)" },
+    { "name": "mt4_close_trade", "description": "Trade schliessen (nur wenn freigegeben)" },
+    { "name": "mt4_modify_trade", "description": "SL/TP aendern (nur wenn freigegeben)" }
+  ],
+  "user_config": {
+    "mt4_data_dir": {
+      "type": "directory",
+      "title": "MT4-Datenordner (optional)",
+      "description": "Ordner aus MT4 > Datei > Datenordner oeffnen. Leer lassen fuer automatische Suche.",
+      "required": false
+    },
+    "allow_trading": {
+      "type": "boolean",
+      "title": "Trading erlauben",
+      "description": "Erlaubt Claude, Trades zu eroeffnen, zu schliessen und zu aendern. Zusaetzlich muss es im ClaudeBridge-EA freigegeben sein.",
+      "required": false,
+      "default": false
+    },
+    "wine_path": {
+      "type": "file",
+      "title": "Pfad zu wine64 (optional, nur Mac)",
+      "description": "Nur noetig, falls das automatische Kompilieren Wine nicht findet.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": { "node": ">=18.0.0" }
+  }
+}

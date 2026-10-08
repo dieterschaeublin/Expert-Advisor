@@ -4,6 +4,8 @@ Ein automatisierter Scalping-EA für den **5-Minuten-Chart**, der viele kleine T
 
 Datei: [`MQL4/Experts/M5_TrendScalper.mq4`](MQL4/Experts/M5_TrendScalper.mq4)
 
+> **Neu: Direkte Verbindung mit Claude Desktop.** Mit dem [MetaTrader 4 Connector](connector/README.md) kann Claude den EA direkt in deinem MT4 installieren, kompilieren, starten und Konto/Trades auslesen.
+
 ---
 
 ## Strategie
