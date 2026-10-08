@@ -38,3 +38,16 @@ schwanken einfache Indikator-Signale um null, die Kosten machen daraus einen ste
 | Gotobi USDJPY (Tokio-Fixing) | t = 2,5 | t = 0,4 | nicht mehr vorhanden |
 
 **Fazit:** Auch die in der Literatur beschriebenen Effekte bestehen den Out-of-Sample-Test nicht.
+
+## Nachtrag: Carry (Zinsdifferenz, `carry.py`)
+
+Halten der höher verzinsten Währung, Swap = Leitzinsdifferenz − 1 % p.a. Broker-Aufschlag, ECN-Kosten bei Wechseln.
+
+| Variante | 2016–2022 | 2023–2026 |
+|---|---|---|
+| Carry pur, Portfolio 5 Paare | −0,3 %/Jahr, Sharpe −0,06 | +1,6 %/Jahr, Sharpe +0,34 |
+| Carry + Trendfilter (EMA 100 Tage) | −0,6 %/Jahr | +0,6 %/Jahr |
+
+Positiv fast nur durch **USDJPY** (2023–2026 +9,3 %/Jahr) – eine Einzelwette auf die Zinsdifferenz USA/Japan
+mit bekanntem Crash-Risiko (z. B. August 2024). Mit nur 5 G10-Paaren und kleinen Zinsdifferenzen
+reicht der Swap-Ertrag nach Broker-Aufschlag nicht. **Kein nachhaltiger Ansatz.**
