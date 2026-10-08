@@ -52,7 +52,7 @@ if __name__ == "__main__":
     print("Lueckengroesse zum Wochenbeginn (Pips, Median / 90%-Quantil / Anzahl > 0,25 Tages-ATR):")
     gaps = {}
     for sym, df in data.items():
-        pip = 0.01 if "JPY" in sym else 0.0001
+        pip = bt.pip_size(sym)
         g = weekly_gaps(df)
         g["gap_pips"] = (g.open - g.fri_close).abs() / pip
         g["gap_atr"] = (g.open - g.fri_close).abs() / g.atrd
@@ -67,8 +67,8 @@ if __name__ == "__main__":
                     for max_bars in (12, 24):
                         R = []
                         for sym, df in data.items():
-                            pip = 0.01 if "JPY" in sym else 0.0001
-                            cost = (bt.COST_ECN[sym] + EXTRA_OPEN_COST) * pip
+                            pip = bt.pip_size(sym)
+                            cost = (bt.cost_pips(sym) + EXTRA_OPEN_COST) * pip
                             for _, g in gaps[sym][gaps[sym].gap_atr > min_gap].iterrows():
                                 r = trade(df, g, entry_bar, fill, stop_mult, max_bars, cost)
                                 if r is not None:
@@ -85,5 +85,13 @@ if __name__ == "__main__":
     for e, g in res.groupby("entry_h"):
         print(f"  Einstieg {e}. Stunde: IS>0 {(g.IS_R > 0).mean():.0%}  OOS>0 {(g.OOS_R > 0).mean():.0%}  "
               f"Median IS {g.IS_R.median():+.3f}R  OOS {g.OOS_R.median():+.3f}R  Trefferquote IS {g.IS_win.median():.0f}%")
+    print("\nJe Paar, Standard-Variante (Luecke > 0.25 ATR, Einstieg 2. Stunde, Ziel 50 %, Stop 2x, 24 h):")
+    for sym, df in data.items():
+        pip = bt.pip_size(sym)
+        cost = (bt.cost_pips(sym) + EXTRA_OPEN_COST) * pip
+        rr = [trade(df, g, 1, 0.5, 2.0, 24, cost) for _, g in gaps[sym][gaps[sym].gap_atr > 0.25].iterrows()]
+        rr = np.array([x for x in rr if x is not None])
+        if len(rr):
+            print(f"  {sym}: {len(rr):3d} Trades, Treffer {np.mean(rr > 0):.0%}, {rr.mean():+.3f} R/Trade, Kosten {bt.cost_pips(sym)} Pips")
     print("\nBeste 8 Varianten nach IS (Einstieg ab 2. Stunde):")
     print(res[res.entry_h >= 2].sort_values("IS_R", ascending=False).head(8).to_string(index=False))

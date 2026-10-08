@@ -54,7 +54,7 @@ def backtest_pair(sym, df, trend_days, min_diff):
     ret[1:] = p_prev * (c[1:] / c[:-1] - 1)                                          # Kursveraenderung
     ret[1:] += (p_prev * diff[:-1] - np.abs(p_prev) * SWAP_MARKUP) / 100 / 365 * gap_days  # Swap
     turn = np.abs(np.diff(pos, prepend=0))
-    ret -= turn * bt.COST_ECN[sym] * pip / c                                          # Kosten
+    ret -= turn * bt.cost_pips(sym) * pip / c                                          # Kosten
     return pd.Series(ret, index=d.index), pd.Series(pos, index=d.index)
 
 

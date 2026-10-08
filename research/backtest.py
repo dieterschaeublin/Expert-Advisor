@@ -22,12 +22,28 @@ IS_START, IS_END, OOS_END = "2016-01-01", "2023-01-01", "2027-01-01"
 # All-in-Kosten (Spread + Kommission) in Pips je Trade
 COST_ECN = {"EURUSD": 0.9, "USDJPY": 1.0, "GBPUSD": 1.2, "EURGBP": 1.3, "USDCHF": 1.4}
 RETAIL_EXTRA = 0.8  # Aufschlag Standard-Konto
+MAJORS = {"EUR", "USD", "GBP", "JPY", "CHF"}
+
+
+def pip_size(sym):
+    return 0.01 if sym.endswith("JPY") else 0.0001
+
+
+def cost_pips(sym):
+    """All-in-ECN-Kosten; fuer nicht hinterlegte Paare konservativ geschaetzt (Crosses teurer)."""
+    if sym in COST_ECN:
+        return COST_ECN[sym]
+    if sym[:3] in MAJORS and sym[3:] in MAJORS:
+        return 1.5
+    if "USD" in sym:
+        return 1.3          # AUDUSD, NZDUSD, USDCAD
+    return 2.0              # sonstige Crosses (AUDNZD, GBPJPY, EURAUD ...)
 
 
 def load(folder):
     data = {}
     for f in sorted(glob.glob(os.path.join(folder, "*.csv"))):
-        sym = os.path.basename(f).split("-")[-1].replace("60.csv", "")
+        sym = os.path.basename(f).split("-")[-1].replace("60.csv", "").replace(".csv", "")[:6].upper()
         df = pd.read_csv(f, header=None, names=["d", "t", "o", "h", "l", "c", "v"])
         df.index = pd.to_datetime(df.d + " " + df.t, format="%Y.%m.%d %H:%M")
         df = df.loc[IS_START:, ["o", "h", "l", "c"]].astype(float)
@@ -244,13 +260,13 @@ def run(data, family, params, extra_cost=0.0, cache={}):
         if key not in cache:
             cache[key] = prep(df)
         f = cache[key]
-        pip = 0.01 if "JPY" in sym else 0.0001
+        pip = pip_size(sym)
         s = fn(df, f, **params)
         t = simulate(df.o.values, df.h.values, df.l.values, df.c.values, f["hour"],
                      s["long_sig"].astype(np.bool_), s["short_sig"].astype(np.bool_),
                      np.asarray(s["exit_long"], dtype=np.bool_), np.asarray(s["exit_short"], dtype=np.bool_),
                      s["stopdist"], s["tp_r"], s["trail"], s["trail_atr"], s["max_bars"], s["exit_hour"],
-                     (COST_ECN[sym] + extra_cost) * pip)
+                     (cost_pips(sym) + extra_cost) * pip)
         if len(t):
             tr = pd.DataFrame(t, columns=["ei", "xi", "dir", "R", "sd"])
             tr["sym"] = sym

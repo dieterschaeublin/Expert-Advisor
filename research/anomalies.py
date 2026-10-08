@@ -32,7 +32,7 @@ def scan_hours(data):
     found = []
     for sym, df in data.items():
         pip = 0.01 if "JPY" in sym else 0.0001
-        cost = bt.COST_ECN[sym]
+        cost = bt.cost_pips(sym)
         best = None
         # 23-03 Uhr ausgeschlossen: Rollover-Spread verzerrt die Bid-Daten (siehe ERGEBNIS.md)
         for hs in range(3, 23):
