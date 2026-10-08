@@ -216,3 +216,25 @@ Einziger Kandidat aus der [Strategie-Recherche](research/ERGEBNIS.md) – **ohne
 | Erwartung | ca. 34 Trades/Jahr über alle 5 Paare zusammen |
 
 Zum Beobachten: mindestens 6 Monate auf dem Demokonto laufen lassen und mit dem Backtest vergleichen.
+
+---
+
+# Weekend-Gap-Fill – EXPERIMENT mit Messprotokoll
+
+Datei: [`MQL4/Experts/WeekendGapFill.mq4`](MQL4/Experts/WeekendGapFill.mq4)
+
+Handelt die Kurslücke zum Wochenbeginn Richtung Freitags-Schluss – aber **erst, wenn Spread + Kommission ≤ 15 % der offenen Restlücke** sind. Hintergrund: Im Backtest (Bid-Daten) schließt sich die Lücke meist in der ersten Stunde, wenn die Spreads am höchsten sind; ob danach ein Vorteil übrig bleibt, muss **live gemessen** werden (der MT4-Tester rechnet mit festem Spread).
+
+| Regel | Standard |
+|---|---|
+| Mindest-Lücke | 0,25 × Tages-ATR(14) |
+| Warten auf günstigen Spread | max. 60 Minuten nach Wochen-Eröffnung |
+| Mindest-Restlücke beim Einstieg | 60 % der ursprünglichen Lücke |
+| Ziel | 50 % der Restlücke |
+| Stop | 2 × Lückengröße |
+| Zeit-Exit | 24 Stunden |
+| Risiko | 0,5 % inkl. Kommission (7 $/Lot Standard) |
+
+**Einsatz:** ECN-Demokonto, je ein Chart pro Symbol (EURUSD, GBPUSD, USDJPY, USDCHF, EURGBP; später Gold/Indizes), Zeitrahmen egal. Mac/VPS muss am **Montag zur Wochen-Eröffnung** laufen.
+
+**Messprotokoll:** `MQL4/Files/WeekendGap_<Symbol>.csv` – Lücke, Spread und Restlücke **minutenweise** in der ersten Stunde, Signale, Trades. Nach 2–3 Monaten die CSV-Dateien zur Auswertung schicken. Mit `InpTradeEnabled = false` misst der EA nur, ohne zu handeln.
