@@ -68,3 +68,16 @@ Spreads zur Wochen-Eröffnung stark ausgeweitet sind (EURUSD oft mehrere Pips). 
 Vorteil, aber zum realen Ask ist er vermutlich nicht erreichbar. Ab der 2. Stunde (normale Spreads) ist der
 Ansatz 2016–2022 in **allen** Varianten negativ. Ohne Bid/Ask-Tickdaten der Wochen-Eröffnung nicht abschließend
 prüfbar → mit Dukascopy-Tickdaten (Bid + Ask) gezielt nachtesten.
+
+### Gap-Fill: Richtung und Positionsgröße
+
+Sofort-Einstieg nach Richtung (Lücke > 0,25 ATR, Ziel 50 %, Stop 2 × Lücke):
+
+| Richtung | 2016–22 | 2023–26 | Bewertung |
+|---|---|---|---|
+| Kauf nach Lücke runter | 93 % Treffer, +0,13 R, t = 5,5 | 96 %, +0,19 R, t = 18 | **unglaubwürdig**: Kauf erfolgt zum Ask (bei Eröffnung stark ausgeweitet); zudem erzeugt der Rollover-Rückgang des Bid künstliche „Lücken nach unten“, die sich mit normalisierendem Spread „schließen“ (doppelt so viele Fälle wie nach oben) |
+| Verkauf nach Lücke hoch (zum Bid = realistisch) | 76 %, −0,05 R, t = −1,0 | 84 %, +0,11 R, t = 2,2 | uneinheitlich, kein belastbarer Vorteil |
+
+Positionsgröße (realistischer Einstieg 2. Stunde, 463 Trades, Erwartung −0,005 R):
+0,5 % Risiko → −1 %, max. Rückgang 8 % · 2 % → −5,5 %, 29 % · 5 % → −17 %, 58 % · 10 % → −40 %, 84 %.
+Hohe Trefferquote bei kleinem Gewinn/großem Verlust rechtfertigt **keine** größere Position.
