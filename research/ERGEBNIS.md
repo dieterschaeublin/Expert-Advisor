@@ -105,3 +105,30 @@ Der EA hat dafür die Option `InpDirection` (nur Verkäufe) zur Live-Messung auf
 (Gold: 38 Lücken hoch, 22 runter). Ergebnis: **kein Vorteil** in keiner Richtung (Gold sofort: −0,04 R / +0,01 R
 Verkauf, −0,11 R / −0,07 R Kauf). Stützt die Vermutung, dass der scheinbar starke FX-Lückenschluss zum großen
 Teil vom Rollover-Effekt in den Bid-Daten stammt.
+
+## Nachtrag: Konto verdoppeln (`verdoppelung.py`)
+
+Monte-Carlo, 20 000 Pfade, 5 Jahre, festes Risiko in % des aktuellen Kontos. Gezählt wird, was zuerst eintritt:
+Konto ×2 oder Konto ×0,5. Trefferquote 60 %, Gewinn in R so gewählt, dass die Erwartung stimmt.
+
+| Risiko/Trade | RSI2-D1, +0,04 R, 34/Jahr | +0,04 R, 170/Jahr (hypothetisch) | 0 R, 250/Jahr | −0,05 R, 250/Jahr |
+|---|---|---|---|---|
+| 0,5 % | 0 % ×2 · 0 % ×0,5 | 0 % · 0 % | 0 % · 0 % | 0 % · 1 % |
+| 1 % | 0 % · 0 % | 9 % · 0 % | 1 % · 2 % | 0 % · 53 % |
+| 2 % | 1 % · 0 % | **52 % · 2 %** | 15 % · 32 % | 0 % · 94 % |
+| 5 % | 30 % · 13 % | 69 % · 29 % | 33 % · 66 % | 4 % · 96 % |
+| 10 % | 48 % · 44 % | 52 % · 48 % | 33 % · 67 % | 13 % · 87 % |
+| 20 % | 42 % · 58 % | 42 % · 58 % | 32 % · 68 % | 21 % · 79 % |
+
+**Bewertung:**
+- Ohne Vorteil (0 R) ist Verdoppeln bei jedem Risiko **unwahrscheinlicher als Halbieren** (max. ~33 %).
+  Mit den realen Kosten (−0,05 R) halbiert sich das Konto schon bei 1–2 % Risiko meist innerhalb von 5 Jahren.
+  Mehr Risiko macht aus einer Strategie ohne Vorteil nur ein schnelleres Münzwerfen mit Verlust.
+- Selbst der beste Kandidat (+0,04 R, nicht signifikant) verdoppelt bei 0,5 % Risiko in 5 Jahren praktisch nie
+  (Median-Konto +3 %). Ab ~10 % Risiko überwiegt der Volatilitätsverlust den Vorteil.
+- Ein realistischer Weg zur Verdopplung bräuchte einen **belegten** Vorteil von ≥ 0,04 R bei **≥ 150 Trades/Jahr**
+  und ~2 % Risiko. Einen solchen Ansatz hat die Recherche nicht gefunden.
+
+**Fazit:** Ein „Verdopplungs-EA“ lässt sich nicht über Lotgröße oder Hebel erzwingen. Ohne nachgewiesenen
+Vorteil ist der sicherste Weg zu einem höheren Kontostand, das Risiko klein zu halten und weiter nach einem
+echten Vorteil zu suchen (z. B. Gap-Fill-Live-Messung auf ECN-Demo).
