@@ -81,3 +81,17 @@ Sofort-Einstieg nach Richtung (Lücke > 0,25 ATR, Ziel 50 %, Stop 2 × Lücke):
 Positionsgröße (realistischer Einstieg 2. Stunde, 463 Trades, Erwartung −0,005 R):
 0,5 % Risiko → −1 %, max. Rückgang 8 % · 2 % → −5,5 %, 29 % · 5 % → −17 %, 58 % · 10 % → −40 %, 84 %.
 Hohe Trefferquote bei kleinem Gewinn/großem Verlust rechtfertigt **keine** größere Position.
+
+### Gap-Fill mit 15 Paaren (`gap_by_direction.py`)
+
+Lücken > 0,25 ATR: **462 nach oben, 1341 nach unten** – die starke Schieflage bestätigt das Rollover-Artefakt
+(Bid fällt zur Eröffnung künstlich → scheinbare Lücken nach unten). Kauf-Ergebnisse (96–98 % Treffer, t bis 60) sind daher nicht verwertbar.
+
+| Verkauf nach Lücke hoch (Stop 2 × Lücke) | 2016–22 | 2023–26 |
+|---|---|---|
+| sofort | 74 %, −0,026 R, t = −1,0 | 82 %, +0,096 R, t = +4,1 |
+| 2. Stunde | 71 %, −0,051 R, t = −2,1 | 68 %, −0,020 R, t = −0,7 |
+| sofort, nur Lücken > 0,5 ATR | gesamt 70 %, +0,030 R, t = +1,2 | |
+
+**Bewertung:** Positiv nur sofort und nur 2023–2026; 2016–2022 negativ. Nicht konsistent → kein
+belastbarer Vorteil. Klärung nur mit Bid/Ask-Daten oder Live-Messung auf ECN-Demo (WeekendGapFill-EA).
