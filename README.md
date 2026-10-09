@@ -271,3 +271,17 @@ Der Nachkauf-Abstand beginnt bei 25 Pips und wächst je Stufe um den Faktor 1,2.
 Beim Start schreibt der EA den Plan mit dem maximalen Verlust in Kontowährung ins Journal. **Empfohlenes Konto:** ab 10.000 USD bei 0,01 Start-Lot. Mit 1.000 USD greift bei diesen Einstellungen schon um Stufe 4–5 der Equity-Stop.
 
 > ⚠️ **Verdoppeln erhöht die Trefferquote, nicht die Erwartung.** Viele kleine Gewinne (meist 1–7 USD je Korb bei 0,01 Start, mit allen 6 Stufen bis 63 USD) werden selten, aber sicher von einem großen Verlust (ca. 650 USD) aufgezehrt. Ein einziger Korb-Stop entspricht grob 100–600 Gewinn-Körben. Ohne die Notbremsen führt eine lange Trendphase zum Totalverlust. Erst ausgiebig im Strategietester und auf einem Demokonto testen.
+
+### Backtest MartingaleGrid (Standard-Einstellungen)
+
+EURUSD M5, 01.01.2021 – Oktober 2026 (ca. 5,7 Jahre), „Every tick“ 90 %, Spread fest 0,9 Pips, MetaQuotes-Demo (ohne Kommission), Start 10.000 USD.
+
+| Kennzahl | Wert |
+|---|---|
+| Nettogewinn | +6.342 USD (≈ 1.100 USD bzw. 11 % des Startkapitals pro Jahr) |
+| Profit-Faktor | 1,33 |
+| Max. Rückgang | 1.460 USD (11,1 %) |
+| Trades | 7.453 (≈ 1.300 pro Jahr), 65 % im Gewinn |
+| Längste Verlustserie | 10 Trades, −698 USD (= ein Korb-Stop) |
+
+Die Kapitalkurve steigt gleichmäßig und hat etwa 8–10 Stufen nach unten von 300–700 USD (Korb-Stops). Die Parameter wurden vor dem Test festgelegt, nicht optimiert. Offen: Kommission (bei 7 $/Lot grob 1.000–2.000 USD weniger), anderer Zeitraum (2016–2020), andere Paare.
