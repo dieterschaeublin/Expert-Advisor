@@ -26,6 +26,10 @@ MAJORS = {"EUR", "USD", "GBP", "JPY", "CHF"}
 
 
 def pip_size(sym):
+    if sym.startswith("XAU"):
+        return 0.1
+    if sym.startswith("XAG"):
+        return 0.01
     return 0.01 if sym.endswith("JPY") else 0.0001
 
 
@@ -33,6 +37,8 @@ def cost_pips(sym):
     """All-in-ECN-Kosten; fuer nicht hinterlegte Paare konservativ geschaetzt (Crosses teurer)."""
     if sym in COST_ECN:
         return COST_ECN[sym]
+    if sym[:3] in ("XAU", "XAG"):
+        return 3.0          # Gold ~0,30 $, Silber ~0,03 $ (Spread + Kommission)
     if sym[:3] in MAJORS and sym[3:] in MAJORS:
         return 1.5
     if "USD" in sym:

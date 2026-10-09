@@ -100,3 +100,8 @@ belastbarer Vorteil. Klärung nur mit Bid/Ask-Daten oder Live-Messung auf ECN-De
 Verkauf sofort: 2016–22 −0,009 R (t = −0,5, n = 473) · 2023–26 +0,094 R (t = +4,8, n = 213).
 Verkauf 2. Stunde: in beiden Zeiträumen negativ. Unverändertes Fazit: nur 2023–2026 positiv.
 Der EA hat dafür die Option `InpDirection` (nur Verkäufe) zur Live-Messung auf ECN-Demo.
+
+**Gold/Silber (Gegenprobe):** Metalle eröffnen nicht genau zum Rollover → keine künstliche Schieflage
+(Gold: 38 Lücken hoch, 22 runter). Ergebnis: **kein Vorteil** in keiner Richtung (Gold sofort: −0,04 R / +0,01 R
+Verkauf, −0,11 R / −0,07 R Kauf). Stützt die Vermutung, dass der scheinbar starke FX-Lückenschluss zum großen
+Teil vom Rollover-Effekt in den Bid-Daten stammt.
