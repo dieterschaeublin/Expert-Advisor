@@ -239,3 +239,35 @@ Handelt die Kurslücke zum Wochenbeginn Richtung Freitags-Schluss – aber **ers
 **Einsatz:** ECN-Demokonto, je ein Chart pro Symbol (EURUSD, GBPUSD, USDJPY, USDCHF, EURGBP; später Gold/Indizes), Zeitrahmen egal. Mac/VPS muss am **Montag zur Wochen-Eröffnung** laufen.
 
 **Messprotokoll:** `MQL4/Files/WeekendGap_<Symbol>.csv` – Lücke, Spread und Restlücke **minutenweise** in der ersten Stunde, Signale, Trades. Nach 2–3 Monaten die CSV-Dateien zur Auswertung schicken. Mit `InpTradeEnabled = false` misst der EA nur, ohne zu handeln.
+
+---
+
+# Martingale-Grid – Nachkauf mit Lot-Verdopplung (nur Demo)
+
+Datei: [`MQL4/Experts/MartingaleGrid.mq4`](MQL4/Experts/MartingaleGrid.mq4)
+
+Startet mit **0,01 Lot** und kauft nach, wenn der Kurs gegen die Position läuft. Bei jedem Nachkauf wird die Lotgröße **verdoppelt**. Der ganze Korb wird geschlossen, sobald er netto (inkl. Kommission und Swap) **10 Pips über dem Durchschnittspreis** steht.
+
+| Stufe | 1 | 2 | 3 | 4 | 5 | 6 | Korb-Stop |
+|---|---|---|---|---|---|---|---|
+| Abstand zum Start | 0 | 25 | 55 | 91 | 134 | 186 | 248 Pips |
+| Lots | 0,01 | 0,02 | 0,04 | 0,08 | 0,16 | 0,32 | Σ 0,63 |
+
+Der Nachkauf-Abstand beginnt bei 25 Pips und wächst je Stufe um den Faktor 1,2. So braucht der Korb mehr Kursbewegung, bevor er die großen Stufen erreicht. Nach der letzten Stufe (186 Pips) muss sich der Kurs nur um rund 42 Pips erholen, damit der Korb im Ziel ist.
+
+| Parameter | Standard |
+|---|---|
+| Richtung | Trend: Schluss über/unter EMA 200 auf H4 (oder nur Kauf / nur Verkauf) |
+| Start-Lots / Faktor | 0,01 / 2,0 |
+| Nachkauf-Abstand | 25 Pips, je Stufe × 1,2 |
+| Max. Stufen | 6 |
+| Korb-Ziel | +10 Pips netto über Durchschnitt |
+| Korb-Stop | eine Stufe hinter dem letzten Nachkauf (248 Pips), Verlust ca. **650 USD** auf EURUSD |
+| Equity-Stop | Korb schließen bei Verlust ≥ 10 % des Kontostands |
+| Pause nach Notbremse | 24 Stunden |
+| Freitag | ab 18 Uhr kein neuer Korb |
+| Spread-Filter | max. 2,5 Pips |
+
+Beim Start schreibt der EA den Plan mit dem maximalen Verlust in Kontowährung ins Journal. **Empfohlenes Konto:** ab 10.000 USD bei 0,01 Start-Lot. Mit 1.000 USD greift bei diesen Einstellungen schon um Stufe 4–5 der Equity-Stop.
+
+> ⚠️ **Verdoppeln erhöht die Trefferquote, nicht die Erwartung.** Viele kleine Gewinne (ca. 1–6 USD je Korb bei 0,01 Start) werden selten, aber sicher von einem großen Verlust (ca. 650 USD) aufgezehrt. Ein einziger Korb-Stop entspricht grob 100–600 Gewinn-Körben. Ohne die Notbremsen führt eine lange Trendphase zum Totalverlust. Erst ausgiebig im Strategietester und auf einem Demokonto testen.
