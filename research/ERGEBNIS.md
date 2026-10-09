@@ -95,3 +95,8 @@ Lücken > 0,25 ATR: **462 nach oben, 1341 nach unten** – die starke Schieflage
 
 **Bewertung:** Positiv nur sofort und nur 2023–2026; 2016–2022 negativ. Nicht konsistent → kein
 belastbarer Vorteil. Klärung nur mit Bid/Ask-Daten oder Live-Messung auf ECN-Demo (WeekendGapFill-EA).
+
+**Update mit 22 Paaren:** Lücken > 0,25 ATR: 686 nach oben, 1993 nach unten (Artefakt bestätigt).
+Verkauf sofort: 2016–22 −0,009 R (t = −0,5, n = 473) · 2023–26 +0,094 R (t = +4,8, n = 213).
+Verkauf 2. Stunde: in beiden Zeiträumen negativ. Unverändertes Fazit: nur 2023–2026 positiv.
+Der EA hat dafür die Option `InpDirection` (nur Verkäufe) zur Live-Messung auf ECN-Demo.

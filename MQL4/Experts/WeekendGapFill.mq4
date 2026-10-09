@@ -42,6 +42,8 @@ input double InpMaxLots          = 2.0;        // Maximale Lotgroesse
 input double InpCommissionPerLot = 7.0;        // Kommission pro Lot Hin+Rueck (Kontowaehrung)
 
 input string InpSepRules         = "===== Regeln ====="; // -----
+enum ENUM_GAP_DIR { GAP_BOTH = 0, GAP_SELL_ONLY = 1, GAP_BUY_ONLY = 2 };
+input ENUM_GAP_DIR InpDirection = GAP_BOTH;   // Richtung: beide / nur Luecken hoch (Verkauf) / nur runter (Kauf)
 input double InpMinGapAtr        = 0.25;       // Min. Luecke (x Tages-ATR 14)
 input double InpMaxCostToGap     = 0.15;       // Max. Kosten (Spread+Kommission) / Restluecke
 input int    InpMaxWaitMinutes   = 60;         // Max. Wartezeit auf guenstigen Spread (Minuten)
@@ -66,6 +68,7 @@ double   g_minSpread   = 0.0;
 double   g_pip         = 0.0;
 int      g_slip        = 0;
 string   g_status      = "";
+bool     g_measureOnly = false; // Woche nur protokollieren (Richtung gefiltert)
 
 //+------------------------------------------------------------------+
 int OnInit()
@@ -120,6 +123,7 @@ void StartWeek(datetime week)
    g_state = 3;
    g_lastLogMin = -1;
    g_minSpread = 1e9;
+   g_measureOnly = false;
 
    // Erste H1-Kerze der Woche und letzte Kerze der Vorwoche suchen
    int first = -1;
@@ -164,6 +168,14 @@ void StartWeek(datetime week)
    {
       g_status = StringFormat("Luecke zu klein: %.1f Pips (%.2f ATR)", gapPips, gapAtr);
       Log("SKIP", "gap_too_small");
+      return;
+   }
+   if((InpDirection == GAP_SELL_ONLY && g_gap < 0) || (InpDirection == GAP_BUY_ONLY && g_gap > 0))
+   {
+      g_status = StringFormat("Luecke %.1f Pips in nicht gehandelter Richtung - nur Messung", g_gap / g_pip);
+      Log("SKIP", "direction_filtered");
+      g_state = 1;
+      g_measureOnly = true;
       return;
    }
    g_state = 1;
@@ -231,7 +243,7 @@ void WaitForEntry()
    Log("SIGNAL", StringFormat("%d;%.2f;%.1f;%s;%s;%s", minutes, spread, restPips,
        DoubleToString(entry, Digits), DoubleToString(sl, Digits), DoubleToString(tp, Digits)));
 
-   if(!InpTradeEnabled)
+   if(!InpTradeEnabled || g_measureOnly)
    {
       g_state = 2;
       g_status = "Signal (nur Messung, Handel aus)";

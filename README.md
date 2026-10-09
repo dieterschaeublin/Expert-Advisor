@@ -228,6 +228,7 @@ Handelt die Kurslücke zum Wochenbeginn Richtung Freitags-Schluss – aber **ers
 | Regel | Standard |
 |---|---|
 | Mindest-Lücke | 0,25 × Tages-ATR(14) |
+| Richtung (`InpDirection`) | beide / **nur Verkäufe nach Lücke hoch** (empfohlen für den Test) / nur Käufe |
 | Warten auf günstigen Spread | max. 60 Minuten nach Wochen-Eröffnung |
 | Mindest-Restlücke beim Einstieg | 60 % der ursprünglichen Lücke |
 | Ziel | 50 % der Restlücke |
