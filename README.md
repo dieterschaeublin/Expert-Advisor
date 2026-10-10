@@ -239,3 +239,34 @@ Handelt die Kurslücke zum Wochenbeginn Richtung Freitags-Schluss – aber **ers
 **Einsatz:** ECN-Demokonto, je ein Chart pro Symbol (EURUSD, GBPUSD, USDJPY, USDCHF, EURGBP; später Gold/Indizes), Zeitrahmen egal. Mac/VPS muss am **Montag zur Wochen-Eröffnung** laufen.
 
 **Messprotokoll:** `MQL4/Files/WeekendGap_<Symbol>.csv` – Lücke, Spread und Restlücke **minutenweise** in der ersten Stunde, Signale, Trades. Nach 2–3 Monaten die CSV-Dateien zur Auswertung schicken. Mit `InpTradeEnabled = false` misst der EA nur, ohne zu handeln.
+
+---
+
+# FX Faktor-Portfolio (Carry + Momentum + Value) – nur Demo bis Backtest bestanden
+
+Datei: [`MQL4/Experts/FX_FactorBasket.mq4`](MQL4/Experts/FX_FactorBasket.mq4) · Backtest: [`research/fx_factor.py`](research/fx_factor.py)
+
+Der am besten belegte reine Forex-Ansatz (Barroso/Santa-Clara, *JFQA* 2015; siehe [`research/RECHERCHE_STRATEGIEN.md`](research/RECHERCHE_STRATEGIEN.md)).
+Kein Signal-Scalper, sondern ein **Währungskorb**, der **einmal pro Monat** umgeschichtet wird. Alle Parameter stammen aus der Literatur und sind **nicht optimiert**.
+
+| Baustein | Regel |
+|---|---|
+| Währungen | USD + EUR, GBP, AUD, NZD, JPY, CHF, CAD (gehandelt über die 7 USD-Paare) |
+| Carry | Zinsdifferenz zum USD – aus den **Swaps des Brokers** (Mitte aus Long/Short) oder manuell eingetragenen Leitzinsen |
+| Momentum | Rendite der letzten 63 Handelstage (3 Monate) |
+| Value-Umkehr | −(Rendite der letzten 756 Handelstage, 36 Monate) – langfristig stark gestiegene Währungen untergewichten |
+| Kombination | je Signal z-Wert über alle 8 Währungen, Mittelwert → Gewichte (Summe 0: gleich viel long wie short) |
+| Volatilitäts-Steuerung | Portfolio auf **6 % Schwankung pro Jahr** skaliert (letzte 60 Tage), Hebel max. 3 |
+| Umschichtung | 1. Handelstag des Monats ab 10 Uhr Server-Zeit; Positionen nur angepasst, wenn > 25 % vom Ziel entfernt |
+| Notfall-Stop | je Position 8 × Tages-ATR(20); ausgestoppte Paare bleiben bis zur nächsten Umschichtung flach |
+| Rückgang-Schalter | Konto 20 % unter Höchststand → alles schließen, Handel stoppen (Freigabe: `InpResetHalt = true`, danach wieder `false`) |
+
+**Einsatz:** **Ein** Chart genügt (beliebiges Symbol/Zeitrahmen) – der EA handelt alle Paare selbst. Bei Symbol-Endungen (z. B. `EURUSD.r`) `InpSymbolSuffix` setzen. Mit `InpTradeEnabled = false` berechnet und zeigt er nur die Zielpositionen (Panel: Carry, Momentum, Value, Ziel-Gewicht je Währung). Das Konto sollte **nur diesen EA** tragen, weil der Rückgang-Schalter das gesamte Konto-Kapital misst.
+
+**Backtest:** Der MT4-Strategietester kann keine Mehr-Paar-EAs testen. Deshalb bildet `research/fx_factor.py` dieselben Regeln nach (inkl. ECN-Kosten und Swap-Aufschlag 1 % p.a.):
+```
+python3 research/fx_factor.py <ordner-mit-H1-csv>
+```
+Benötigt die H1-Exporte von EURUSD, GBPUSD, AUDUSD, NZDUSD, USDJPY, USDCHF, USDCAD. Ausgabe je Faktor einzeln und kombiniert, getrennt 2016–22 / 2023–26.
+
+**Erwartung laut Literatur:** Sharpe ~0,3–0,6, also wenige Prozent pro Jahr bei 6 % Volatilität, mehrjährige Durststrecken möglich. Der Vorteil wird laut den Autoren zunehmend wegarbitriert. **Erst auf Echtgeld, wenn der Backtest in beiden Zeiträumen nach Kosten positiv ist** und die Demo-Ergebnisse dazu passen.
