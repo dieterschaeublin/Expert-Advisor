@@ -268,6 +268,8 @@ Der Nachkauf-Abstand beginnt bei 25 Pips und wächst je Stufe um den Faktor 1,2.
 | Freitag | ab 18 Uhr kein neuer Korb |
 | Spread-Filter | max. 2,5 Pips |
 
+**Abstand nach Tages-ATR (`InpStepMode = ATR`, ab Version 1.10):** Abstand und Korb-Ziel werden als Anteil der Tages-ATR(14) des Vortags vor Korb-Start berechnet (Standard 0,4 × ATR bzw. 0,15 × ATR) und gelten für den ganzen Korb. So passt sich das Gitter an jedes Paar und an ruhige/unruhige Phasen an – mit einer Einstellung lassen sich alle Paare fair vergleichen. Beispiele (ATR ca.): EURUSD 65 Pips → 26 Pips Abstand, EURGBP 40 → 16, AUDNZD 55 → 22. Der Plan im Journal zeigt die aktuell berechneten Pips. Bei Nebenkursen `InpMaxSpreadPips` auf etwa 4 erhöhen.
+
 Beim Start schreibt der EA den Plan mit dem maximalen Verlust in Kontowährung ins Journal. **Empfohlenes Konto:** ab 10.000 USD bei 0,01 Start-Lot. Mit 1.000 USD greift bei diesen Einstellungen schon um Stufe 4–5 der Equity-Stop.
 
 > ⚠️ **Verdoppeln erhöht die Trefferquote, nicht die Erwartung.** Viele kleine Gewinne (meist 1–7 USD je Korb bei 0,01 Start, mit allen 6 Stufen bis 63 USD) werden selten, aber sicher von einem großen Verlust (ca. 650 USD) aufgezehrt. Ein einziger Korb-Stop entspricht grob 100–600 Gewinn-Körben. Ohne die Notbremsen führt eine lange Trendphase zum Totalverlust. Erst ausgiebig im Strategietester und auf einem Demokonto testen.

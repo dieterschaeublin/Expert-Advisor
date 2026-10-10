@@ -5,14 +5,19 @@
 //+------------------------------------------------------------------+
 //| Ablauf (Kauf, Verkauf spiegelbildlich):                          |
 //|   1. Start mit StartLots (0.01) in Richtung des Filters          |
-//|   2. Laeuft der Kurs GridStepPips gegen den Korb -> Nachkauf mit |
+//|   2. Laeuft der Kurs GridStep gegen den Korb -> Nachkauf mit     |
 //|      LotMultiplier x letzte Lots (0.01, 0.02, 0.04, 0.08 ...)    |
 //|      Der Abstand waechst je Stufe um StepMultiplier               |
-//|   3. Korb-Ziel: Durchschnittspreis + TakeProfitPips (netto, inkl. |
+//|   3. Korb-Ziel: Durchschnittspreis + TakeProfit (netto, inkl.     |
 //|      Kommission und Swap) -> alle Positionen schliessen           |
 //|   4. Notbremsen: nach MaxLevels kein Nachkauf mehr, Korb-Stop     |
 //|      eine weitere Stufe hinter dem letzten Nachkauf, Equity-Stop  |
 //|      in % des Kontos, danach Pause                                |
+//|                                                                  |
+//| Abstand und Ziel wahlweise in Pips oder als Anteil der Tages-ATR |
+//| (StepMode = ATR). Im ATR-Modus gilt fuer den ganzen Korb die ATR |
+//| des Vortags vor dem Start - so passt sich das Gitter an jedes    |
+//| Paar an (EURUSD 0.4 x ATR ~ 25 Pips, EURGBP ~ 15 Pips).          |
 //|                                                                  |
 //| Standard (EURUSD, 6 Stufen, 25 Pips x 1.2):                       |
 //|   Nachkaeufe bei 0 / 25 / 55 / 91 / 134 / 186 Pips               |
@@ -27,7 +32,7 @@
 //| Je Symbol ein Chart, Zeitrahmen egal (H1 empfohlen).             |
 //+------------------------------------------------------------------+
 #property copyright "Expert-Advisor"
-#property version   "1.00"
+#property version   "1.10"
 #property strict
 #property description "Nachkauf-Gitter mit Lot-Verdopplung, Korb-Ziel und Notbremsen."
 #property description "Experiment - standardmaessig nur auf Demokonten aktiv."
@@ -42,10 +47,15 @@ input double InpMaxSpreadPips    = 2.5;        // Max. Spread fuer Einstieg/Nach
 input string InpSepGrid          = "===== Gitter ====="; // -----
 input double InpStartLots        = 0.01;       // Start-Lotgroesse
 input double InpLotMultiplier    = 2.0;        // Lot-Faktor je Nachkauf (2.0 = verdoppeln)
-input double InpGridStepPips     = 25.0;       // Abstand zum 1. Nachkauf (Pips)
+enum ENUM_STEP_MODE { STEP_PIPS = 0, STEP_ATR = 1 };
+input ENUM_STEP_MODE InpStepMode = STEP_PIPS;  // Abstand und Ziel: in Pips / als Anteil der Tages-ATR
+input double InpGridStepPips     = 25.0;       // Pips: Abstand zum 1. Nachkauf
+input double InpGridStepAtr      = 0.4;        // ATR: Abstand zum 1. Nachkauf (x Tages-ATR)
+input int    InpAtrPeriod        = 14;         // ATR: Periode (Tageskerzen)
 input double InpStepMultiplier   = 1.2;        // Abstand waechst je Stufe um diesen Faktor (1.0 = gleich)
 input int    InpMaxLevels        = 6;          // Max. Positionen im Korb (inkl. Start)
-input double InpTakeProfitPips   = 10.0;       // Korb-Ziel: Pips ueber/unter Durchschnittspreis (netto)
+input double InpTakeProfitPips   = 10.0;       // Pips: Korb-Ziel ueber/unter Durchschnittspreis (netto)
+input double InpTakeProfitAtr    = 0.15;       // ATR: Korb-Ziel (x Tages-ATR, netto)
 input double InpCommissionPerLot = 7.0;        // Kommission pro Lot Hin+Rueck (nur fuer Anzeige/Planung)
 
 input string InpSepDir           = "===== Richtung ====="; // -----
@@ -67,6 +77,8 @@ double   g_lots      = 0.0;   // Summe Lots
 double   g_avg       = 0.0;   // gewichteter Durchschnittspreis
 double   g_firstPrice= 0.0;   // Einstiegskurs der Start-Position
 double   g_net       = 0.0;   // Gewinn + Swap + Kommission
+double   g_step      = 0.0;   // Abstand zum 1. Nachkauf (Pips) fuer den aktuellen Korb
+double   g_tp        = 0.0;   // Korb-Ziel (Pips) fuer den aktuellen Korb
 
 double   g_pip       = 0.0;
 int      g_slip      = 0;
@@ -84,7 +96,9 @@ int OnInit()
       Alert("MartingaleGrid: Echtgeld-Konto erkannt - der EA bleibt inaktiv (Experiment).");
       return INIT_FAILED;
    }
-   if(InpMaxLevels < 1 || InpStartLots <= 0 || InpLotMultiplier < 1.0 || InpGridStepPips <= 0 || InpStepMultiplier < 1.0)
+   if(InpMaxLevels < 1 || InpStartLots <= 0 || InpLotMultiplier < 1.0 || InpStepMultiplier < 1.0 ||
+      (InpStepMode == STEP_PIPS && InpGridStepPips <= 0) ||
+      (InpStepMode == STEP_ATR && (InpGridStepAtr <= 0 || InpAtrPeriod < 1)))
    {
       Alert("MartingaleGrid: ungueltige Gitter-Einstellungen.");
       return INIT_PARAMETERS_INCORRECT;
@@ -125,8 +139,34 @@ double LevelDistance(int level)
 {
    double d = 0.0;
    for(int i = 0; i < level; i++)
-      d += InpGridStepPips * MathPow(InpStepMultiplier, i);
+      d += g_step * MathPow(InpStepMultiplier, i);
    return d;
+}
+
+//+------------------------------------------------------------------+
+//| Abstand und Ziel in Pips festlegen. ATR-Modus: ATR des Vortags   |
+//| vor Korb-Start (basketStart = 0 -> kein Korb, aktuelle Vortags-  |
+//| ATR). So bleibt das Gitter eines Korbs fest, auch nach Neustart. |
+//+------------------------------------------------------------------+
+bool UpdateGridSize(datetime basketStart)
+{
+   if(InpStepMode == STEP_PIPS)
+   {
+      g_step = InpGridStepPips;
+      g_tp   = InpTakeProfitPips;
+      return true;
+   }
+   int shift = 1;
+   if(basketStart > 0)
+   {
+      shift = iBarShift(NULL, PERIOD_D1, basketStart) + 1;
+      if(shift < 1) shift = 1;
+   }
+   double atr = iATR(NULL, PERIOD_D1, InpAtrPeriod, shift) / g_pip;
+   if(atr <= 0) return false;
+   g_step = InpGridStepAtr * atr;
+   g_tp   = InpTakeProfitAtr * atr;
+   return true;
 }
 
 double LevelLots(int level) { return InpStartLots * MathPow(InpLotMultiplier, level); }
@@ -146,6 +186,7 @@ double NormalizeLots(double lots)
 //+------------------------------------------------------------------+
 void PrintPlan()
 {
+   if(!UpdateGridSize(0)) { Print("MartingaleGrid: noch keine Tages-ATR - Plan folgt beim Start des Korbs"); return; }
    double pv = PipValuePerLot();
    double stopDist = LevelDistance(InpMaxLevels);   // eine Stufe hinter dem letzten Nachkauf
    double loss = 0.0, total = 0.0;
@@ -157,7 +198,7 @@ void PrintPlan()
       loss  += (stopDist - LevelDistance(i)) * lots * pv + lots * InpCommissionPerLot;
       levels += StringFormat("%s%.0f Pips/%.2f", i > 0 ? ", " : "", LevelDistance(i), lots);
    }
-   Print("MartingaleGrid Plan: ", levels);
+   Print(StringFormat("MartingaleGrid Plan (Abstand %.1f Pips, Ziel %.1f Pips): ", g_step, g_tp), levels);
    Print(StringFormat("MartingaleGrid: max. %.2f Lots, Korb-Stop bei %.0f Pips -> Verlust ca. %.0f %s (%.1f %% des Kontos)",
                       total, stopDist, loss, AccountCurrency(), 100.0 * loss / MathMax(AccountBalance(), 1.0)));
 }
@@ -190,6 +231,7 @@ void ReadBasket()
       }
    }
    if(g_lots > 0) g_avg = sum / g_lots;
+   UpdateGridSize(firstT);
 }
 
 //+------------------------------------------------------------------+
@@ -213,6 +255,12 @@ void TryStart()
       return;
    }
 
+   if(!UpdateGridSize(0) || g_step <= 0)
+   {
+      g_status = "Warte auf Daten Tages-ATR";
+      return;
+   }
+
    int type = -1;
    if(InpDirection == DIR_BUY_ONLY)       type = OP_BUY;
    else if(InpDirection == DIR_SELL_ONLY) type = OP_SELL;
@@ -233,7 +281,7 @@ void TryStart()
 void ManageBasket()
 {
    double pv = PipValuePerLot();
-   double target = InpTakeProfitPips * pv * g_lots;
+   double target = g_tp * pv * g_lots;
 
    // 1. Korb-Ziel erreicht (netto inkl. Kommission und Swap)
    if(g_net >= target && target > 0)
@@ -254,7 +302,7 @@ void ManageBasket()
    }
 
    // 3. Notbremse: Korb-Stop eine Stufe hinter dem letzten Nachkauf
-   if(InpFinalStop && g_count >= InpMaxLevels && against >= LevelDistance(InpMaxLevels))
+   if(InpFinalStop && g_step > 0 && g_count >= InpMaxLevels && against >= LevelDistance(InpMaxLevels))
    {
       CloseBasket(StringFormat("Korb-Stop nach %d Stufen (%.2f %s)", g_count, g_net, AccountCurrency()));
       g_pauseUntil = TimeCurrent() + InpPauseHours * 3600;
@@ -262,7 +310,9 @@ void ManageBasket()
    }
 
    // 4. Nachkauf
-   if(g_count < InpMaxLevels)
+   if(g_step <= 0)
+      g_status = "Warte auf Daten Tages-ATR";
+   else if(g_count < InpMaxLevels)
    {
       double need = LevelDistance(g_count);
       g_status = StringFormat("Stufe %d/%d, naechster Nachkauf bei %.0f Pips (aktuell %.0f)",
@@ -334,9 +384,9 @@ void UpdatePanel()
            StringFormat("  Durchschnitt: %s   Ergebnis netto: %.2f %s\n",
                         g_count > 0 ? DoubleToString(g_avg, Digits) : "-", g_net, AccountCurrency()),
            StringFormat("  Ziel: %.2f %s   Equity-Stop: %.2f %s\n",
-                        InpTakeProfitPips * pv * g_lots, AccountCurrency(),
+                        g_tp * pv * g_lots, AccountCurrency(),
                         InpEquityStopPct / 100.0 * AccountBalance(), AccountCurrency()),
-           StringFormat("  Spread: %.1f Pips\n", SpreadPips()),
+           StringFormat("  Abstand: %.1f Pips   Ziel: %.1f Pips   Spread: %.1f Pips\n", g_step, g_tp, SpreadPips()),
            "  ", g_status, "\n");
 }
 //+------------------------------------------------------------------+
