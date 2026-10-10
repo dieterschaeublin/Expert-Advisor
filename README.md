@@ -242,7 +242,9 @@ Handelt die Kurslücke zum Wochenbeginn Richtung Freitags-Schluss – aber **ers
 
 ---
 
-# FX Faktor-Portfolio (Carry + Momentum + Value) – nur Demo bis Backtest bestanden
+# FX Faktor-Portfolio (Carry + Momentum + Value) – Backtest NICHT bestanden
+
+> **Ergebnis (10/2026):** 2016–22 −6,1 %/Jahr (Sharpe −0,93), 2023–26 −0,2 %/Jahr – schon vor Kosten negativ. Details: [`research/ERGEBNIS.md`](research/ERGEBNIS.md). Nicht einsetzen.
 
 Datei: [`MQL4/Experts/FX_FactorBasket.mq4`](MQL4/Experts/FX_FactorBasket.mq4) · Backtest: [`research/fx_factor.py`](research/fx_factor.py)
 
