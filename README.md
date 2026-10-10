@@ -256,5 +256,7 @@ Datei: [`MQL4/Experts/Index_PullbackTOM.mq4`](MQL4/Experts/Index_PullbackTOM.mq4
 
 **Märkte:** US500 / SPX500, NAS100, US30, GER40 – je ein **D1-Chart**. Beide Module laufen getrennt (Magic +0 / +1), können also gleichzeitig offen sein.
 
+**Ohne Index-CFDs im MT4:** Kostenlose Tagesdaten von Yahoo Finance genügen (Seite des Index → *Historical Data* → Zeitraum *Max* → *Download*: `^GSPC` = S&P 500, `^NDX` = Nasdaq 100, `^GDAXI` = DAX). Die CSV-Dateien unverändert in einen Ordner legen und das Skript darauf starten. Für den Live-Test des EA ein kostenloses MT4-Demokonto bei einem Broker mit Index-CFDs eröffnen (z. B. IC Markets, Pepperstone, Admirals). Der EA läuft außerdem unverändert auf **XAUUSD** (Gold hat ebenfalls eine langfristige Drift).
+
 **Prüfung zuerst mit eigenen Daten:** Im MT4 über F2 (History Center) die D1- oder H1-Historie der Index-CFDs exportieren und
 `python3 research/indices.py <ordner>` ausführen. Das Skript testet exakt die EA-Regeln (RSI-Schwellen 5/10/25 und Monatswechsel) getrennt für 2012–2019 und 2020–2026, inkl. Spread in Indexpunkten und Übernacht-Finanzierung (6 % p.a.), und zeigt Buy & Hold zum Vergleich.

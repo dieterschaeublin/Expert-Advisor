@@ -5,8 +5,10 @@ Aktienindizes haben beides (langfristiger Aufwaertstrend, kurzfristige Uebertrei
 unten werden meist aufgeholt) und zusaetzlich den Monatswechsel-Effekt (Gehaltszahlungen,
 Fonds-Zufluesse zum Monatsanfang). Getestet werden genau die Regeln des EA Index_PullbackTOM.
 
-Daten: MT4-Export (History Center, D1 oder H1) z. B. US500, NAS100, US30, GER40, UK100.
-Dateiname muss das Symbol enthalten, z. B. "US500-1440.csv" oder "GER40.csv".
+Daten: MT4-Export (History Center, D1 oder H1) z. B. US500, NAS100, US30, GER40, UK100, XAUUSD,
+oder Tagesdaten als CSV mit Kopfzeile (Date,Open,High,Low,Close ...), z. B. von Yahoo Finance
+(^GSPC, ^NDX, ^GDAXI) oder stooq.com. Das Symbol wird aus dem Dateinamen gelesen,
+z. B. "US500-1440.csv", "GER40.csv"; Yahoo-Namen wie "^GSPC.csv" werden zugeordnet.
 
 Annahmen:
   * Signal auf Tagesschluss, Einstieg/Ausstieg zur Eroeffnung der naechsten Tageskerze
@@ -25,7 +27,9 @@ import pandas as pd
 
 IS_START, IS_END, OOS_END = "2012-01-01", "2020-01-01", "2027-01-01"
 COST_PTS = {"US500": 0.6, "SPX500": 0.6, "NAS100": 1.8, "USTEC": 1.8, "US30": 3.0,
-            "GER40": 1.5, "DE40": 1.5, "UK100": 1.2, "JP225": 8.0, "EU50": 1.5}
+            "GER40": 1.5, "DE40": 1.5, "UK100": 1.2, "JP225": 8.0, "EU50": 1.5, "XAUUSD": 0.3}
+ALIASES = {"GSPC": "US500", "SPX": "US500", "NDX": "NAS100", "DJI": "US30", "GDAXI": "GER40",
+           "DAX": "GER40", "FTSE": "UK100", "N225": "JP225", "STOXX50E": "EU50", "GOLD": "XAUUSD"}
 FIN_PA = 0.06  # Finanzierung Long p.a.
 
 
@@ -33,10 +37,20 @@ def load(folder):
     data = {}
     for f in sorted(glob.glob(os.path.join(folder, "*.csv"))):
         name = os.path.basename(f).upper()
-        sym = next((s for s in COST_PTS if s in name), name.split("-")[0].split(".")[0])
-        df = pd.read_csv(f, header=None, names=["d", "t", "o", "h", "l", "c", "v"])
-        df.index = pd.to_datetime(df.d + " " + df.t, format="%Y.%m.%d %H:%M")
-        df = df[["o", "h", "l", "c"]].astype(float)
+        base = name.split("-")[0].split(".")[0].lstrip("^").replace("_D", "")
+        sym = next((s for s in COST_PTS if s in name), ALIASES.get(base, base))
+        with open(f) as fh:
+            first = fh.readline()
+        if first[:1].isalpha():  # Kopfzeile -> Yahoo/stooq-Format
+            df = pd.read_csv(f)
+            df.columns = [c.strip().lower() for c in df.columns]
+            df.index = pd.to_datetime(df["date"].astype(str).str[:10])
+            df = df.rename(columns={"open": "o", "high": "h", "low": "l", "close": "c"})
+            df = df[["o", "h", "l", "c"]].apply(pd.to_numeric, errors="coerce").dropna()
+        else:
+            df = pd.read_csv(f, header=None, names=["d", "t", "o", "h", "l", "c", "v"])
+            df.index = pd.to_datetime(df.d + " " + df.t, format="%Y.%m.%d %H:%M")
+            df = df[["o", "h", "l", "c"]].astype(float)
         df = df[~df.index.duplicated()].sort_index()
         d = df.resample("1D").agg({"o": "first", "h": "max", "l": "min", "c": "last"}).dropna()
         d = d[d.index.dayofweek < 5]  # Sonntagskerzen einiger Broker verwerfen
