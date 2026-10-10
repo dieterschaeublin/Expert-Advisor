@@ -32,7 +32,7 @@
 //| Je Symbol ein Chart, Zeitrahmen egal (H1 empfohlen).             |
 //+------------------------------------------------------------------+
 #property copyright "Expert-Advisor"
-#property version   "1.10"
+#property version   "1.11"
 #property strict
 #property description "Nachkauf-Gitter mit Lot-Verdopplung, Korb-Ziel und Notbremsen."
 #property description "Experiment - standardmaessig nur auf Demokonten aktiv."
@@ -47,8 +47,12 @@ input double InpMaxSpreadPips    = 2.5;        // Max. Spread fuer Einstieg/Nach
 input string InpSepGrid          = "===== Gitter ====="; // -----
 input double InpStartLots        = 0.01;       // Start-Lotgroesse
 input double InpLotMultiplier    = 2.0;        // Lot-Faktor je Nachkauf (2.0 = verdoppeln)
-enum ENUM_STEP_MODE { STEP_PIPS = 0, STEP_ATR = 1 };
-input ENUM_STEP_MODE InpStepMode = STEP_PIPS;  // Abstand und Ziel: in Pips / als Anteil der Tages-ATR
+enum ENUM_STEP_MODE
+{
+   STEP_PIPS = 0,   // in Pips
+   STEP_ATR  = 1    // als Anteil der Tages-ATR
+};
+input ENUM_STEP_MODE InpStepMode = STEP_PIPS;  // Abstand und Ziel berechnen
 input double InpGridStepPips     = 25.0;       // Pips: Abstand zum 1. Nachkauf
 input double InpGridStepAtr      = 0.4;        // ATR: Abstand zum 1. Nachkauf (x Tages-ATR)
 input int    InpAtrPeriod        = 14;         // ATR: Periode (Tageskerzen)
@@ -59,8 +63,13 @@ input double InpTakeProfitAtr    = 0.15;       // ATR: Korb-Ziel (x Tages-ATR, n
 input double InpCommissionPerLot = 7.0;        // Kommission pro Lot Hin+Rueck (nur fuer Anzeige/Planung)
 
 input string InpSepDir           = "===== Richtung ====="; // -----
-enum ENUM_GRID_DIR { DIR_TREND = 0, DIR_BUY_ONLY = 1, DIR_SELL_ONLY = 2 };
-input ENUM_GRID_DIR InpDirection = DIR_TREND;  // Richtung: Trend (EMA) / nur Kauf / nur Verkauf
+enum ENUM_GRID_DIR
+{
+   DIR_TREND     = 0,   // Trend (EMA)
+   DIR_BUY_ONLY  = 1,   // nur Kauf
+   DIR_SELL_ONLY = 2    // nur Verkauf
+};
+input ENUM_GRID_DIR InpDirection = DIR_TREND;  // Richtung
 input ENUM_TIMEFRAMES InpTrendTF = PERIOD_H4;  // Zeitrahmen Trendfilter
 input int    InpTrendEma         = 200;        // EMA-Periode Trendfilter
 
