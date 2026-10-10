@@ -239,3 +239,22 @@ Handelt die Kurslücke zum Wochenbeginn Richtung Freitags-Schluss – aber **ers
 **Einsatz:** ECN-Demokonto, je ein Chart pro Symbol (EURUSD, GBPUSD, USDJPY, USDCHF, EURGBP; später Gold/Indizes), Zeitrahmen egal. Mac/VPS muss am **Montag zur Wochen-Eröffnung** laufen.
 
 **Messprotokoll:** `MQL4/Files/WeekendGap_<Symbol>.csv` – Lücke, Spread und Restlücke **minutenweise** in der ersten Stunde, Signale, Trades. Nach 2–3 Monaten die CSV-Dateien zur Auswertung schicken. Mit `InpTradeEnabled = false` misst der EA nur, ohne zu handeln.
+
+---
+
+# Index Rücksetzer + Monatswechsel (Aktienindizes, D1, nur Long)
+
+Datei: [`MQL4/Experts/Index_PullbackTOM.mq4`](MQL4/Experts/Index_PullbackTOM.mq4) · Test: [`research/indices.py`](research/indices.py)
+
+**Neuer Ansatz: anderer Markt statt anderer Indikator.** Alle FX-Tests zeigen: Devisen haben weder Drift noch verlässliche kurzfristige Rückkehr zum Mittel. Aktienindizes haben beides – einen langfristigen Aufwärtstrend und schnelle Erholungen nach kurzen Einbrüchen – plus regelmäßige Geldzuflüsse zum Monatswechsel (Gehälter, Sparpläne, Fonds). Der EA handelt diese zwei Effekte, beide nur Long.
+
+| Modul | Einstieg | Ausstieg |
+|---|---|---|
+| 1. RSI(2)-Rücksetzer | Schluss > SMA(200) und RSI(2) < 10 → Kauf zur nächsten Eröffnung | Schluss > SMA(5), spätestens nach 10 Tagen |
+| 2. Monatswechsel | Eröffnung des letzten Handelstags im Monat | Eröffnung des 4. Handelstags im neuen Monat |
+| Notstop (beide) | 3 × ATR(14) | Lotgröße so, dass Stop = 1 % Risiko je Modul |
+
+**Märkte:** US500 / SPX500, NAS100, US30, GER40 – je ein **D1-Chart**. Beide Module laufen getrennt (Magic +0 / +1), können also gleichzeitig offen sein.
+
+**Prüfung zuerst mit eigenen Daten:** Im MT4 über F2 (History Center) die D1- oder H1-Historie der Index-CFDs exportieren und
+`python3 research/indices.py <ordner>` ausführen. Das Skript testet exakt die EA-Regeln (RSI-Schwellen 5/10/25 und Monatswechsel) getrennt für 2012–2019 und 2020–2026, inkl. Spread in Indexpunkten und Übernacht-Finanzierung (6 % p.a.), und zeigt Buy & Hold zum Vergleich.

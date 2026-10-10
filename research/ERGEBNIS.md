@@ -105,3 +105,11 @@ Der EA hat dafür die Option `InpDirection` (nur Verkäufe) zur Live-Messung auf
 (Gold: 38 Lücken hoch, 22 runter). Ergebnis: **kein Vorteil** in keiner Richtung (Gold sofort: −0,04 R / +0,01 R
 Verkauf, −0,11 R / −0,07 R Kauf). Stützt die Vermutung, dass der scheinbar starke FX-Lückenschluss zum großen
 Teil vom Rollover-Effekt in den Bid-Daten stammt.
+
+## Nächster Ansatz: Aktienindizes statt Devisen (`indices.py`)
+
+Ergebnis aller FX-Tests: keine Drift, keine stabile Rückkehr zum Mittel, Kosten fressen den Rest.
+Aktienindizes haben beides strukturell (Aufwärtsdrift, Erholung nach kurzen Einbrüchen) sowie den
+Monatswechsel-Effekt. Umgesetzt in `Index_PullbackTOM.mq4`; `indices.py` prüft dieselben Regeln auf
+MT4-Exporten von US500/NAS100/GER40 (2012–2019 vs. 2020–2026, mit Spread und Finanzierung).
+**Noch nicht mit echten Daten getestet** – Index-Historie aus dem MT4 wird benötigt.
