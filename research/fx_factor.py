@@ -60,18 +60,19 @@ def weights(i, px, rets, rates, use):
 
 
 def run(data, use):
-    closes = pd.DataFrame({p: data[p].c.resample("1D").last() for p in PAIRS}).dropna()
+    pairs = [p for p in PAIRS if p in data]
+    closes = pd.DataFrame({p: data[p].c.resample("1D").last() for p in pairs}).dropna()
     closes = closes[closes.index.dayofweek < 5]
-    ccys = [currency(p)[0] for p in PAIRS]
-    sign = np.array([currency(p)[1] for p in PAIRS])
+    ccys = [currency(p)[0] for p in pairs]
+    sign = np.array([currency(p)[1] for p in pairs])
     px = np.where(sign > 0, closes.values, 1 / closes.values)          # Waehrung in USD
-    rets = np.vstack([np.zeros(len(PAIRS)), px[1:] / px[:-1] - 1])
+    rets = np.vstack([np.zeros(len(pairs)), px[1:] / px[:-1] - 1])
     rates = np.column_stack([rate_series(c, closes.index) for c in ccys]) - rate_series("USD", closes.index)[:, None]
-    cost = np.array([bt.cost_pips(p) * bt.pip_size(p) for p in PAIRS]) / closes.values   # Anteil am Nominal
+    cost = np.array([bt.cost_pips(p) * bt.pip_size(p) for p in pairs]) / closes.values   # Anteil am Nominal
     days = np.append(1.0, np.diff(closes.index.values).astype("timedelta64[D]").astype(float))
     month_end = closes.index.to_series().dt.month.diff().shift(-1).fillna(1).values != 0
 
-    w = np.zeros(len(PAIRS))
+    w = np.zeros(len(pairs))
     out, gross = np.zeros(len(closes)), np.zeros(len(closes))
     for i in range(len(closes)):
         out[i] = w @ rets[i] + (w @ rates[i - 1] - np.abs(w).sum() * SWAP_MARKUP) / 100 / 365 * days[i] if i else 0.0
@@ -86,8 +87,10 @@ def run(data, use):
 if __name__ == "__main__":
     data = bt.load(sys.argv[1])
     missing = [p for p in PAIRS if p not in data]
+    if len(PAIRS) - len(missing) < 3:
+        sys.exit("Mindestens 3 der Paare noetig: " + ", ".join(PAIRS))
     if missing:
-        sys.exit("Fehlende Paare: " + ", ".join(missing))
+        print("ACHTUNG - ohne " + ", ".join(missing) + " (weniger Waehrungen als im EA)")
     variants = {"Carry": dict(carry=1, mom=0, value=0), "Momentum": dict(carry=0, mom=1, value=0),
                 "Value-Umkehr": dict(carry=0, mom=0, value=1), "KOMBINIERT (EA)": dict(carry=1, mom=1, value=1)}
     for name, use in variants.items():

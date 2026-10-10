@@ -105,3 +105,21 @@ Der EA hat dafür die Option `InpDirection` (nur Verkäufe) zur Live-Messung auf
 (Gold: 38 Lücken hoch, 22 runter). Ergebnis: **kein Vorteil** in keiner Richtung (Gold sofort: −0,04 R / +0,01 R
 Verkauf, −0,11 R / −0,07 R Kauf). Stützt die Vermutung, dass der scheinbar starke FX-Lückenschluss zum großen
 Teil vom Rollover-Effekt in den Bid-Daten stammt.
+
+## Nachtrag: Währungs-Faktor-Portfolio (`fx_factor.py`, EA `FX_FactorBasket.mq4`)
+
+Carry + Momentum (3 Monate) + Value-Umkehr (36 Monate) über 8 Währungen (7 USD-Paare), monatlich, Ziel-Volatilität 6 %,
+Parameter aus der Literatur (Barroso/Santa-Clara 2015), **nicht optimiert**. Daten: MT4-H1-Export, AUD/NZD/CHF ab 04/2016.
+
+| Variante | 2016–22 | 2023–26 |
+|---|---|---|
+| Carry | −1,9 %/J, Sharpe −0,28 | +3,7 %/J, Sharpe +0,54 |
+| Momentum | −5,7 %/J, Sharpe −0,85 | −1,4 %/J, Sharpe −0,22 |
+| Value-Umkehr (ab 2019) | −2,1 %/J, Sharpe −0,32 | −5,4 %/J, Sharpe −0,85 |
+| **Kombiniert (EA)** | **−6,1 %/J, Sharpe −0,93**, max. Rückgang 37 % | −0,2 %/J, Sharpe −0,03 |
+| Kombiniert ohne jegliche Kosten | −4,1 %/J, Sharpe −0,62 | +2,0 %/J, Sharpe +0,32 |
+
+**Bewertung:** Schon **vor Kosten** 2016–2022 klar negativ. Kosten + Swap-Aufschlag (bei Hebel ~1,9) kosten zusätzlich ~2 %/Jahr.
+Einzig Carry 2023–26 positiv – wie in `carry.py` getrieben von der hohen USD-Zinsdifferenz (u. a. gegen JPY), 2016–22 aber negativ.
+Bestätigt die Replikationen: Der in der Literatur (Daten bis ~2010) dokumentierte Faktor-Vorteil ist in G10-Währungen
+seit 2016 nicht mehr vorhanden. **EA nicht einsetzen.**
